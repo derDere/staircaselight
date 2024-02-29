@@ -3,31 +3,40 @@
 #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
 
-#define LED_COUNT 240
-#define PIN 2
-#define STEP_SPEED 1
-#define ON_MAX_TIME 600
-#define MOTION_DELAY 50
-#define BTN_DELAY 10
-#define RAINBOW_LEN 12
+#define LED_COUNT 240 // Wie lang is der LED Streifen
+#define STEP_SPEED 2 // Wie schnell geht es an
+#define ANIMATION_SPEED 1 // Wie schnell wird Animiert
+#define ON_MAX_TIME 600 // Wie lange nach bewegung bis Licht auto aus geht
+#define MOTION_DELAY 50 // Wie lange bis ein MotionSensor wieder triggern kan
+#define BTN_DELAY 5 // Wie lange bis der Button reagiert
+#define RAINBOW_LEN 60 // Regenbogen Länge von Rot bis Rot
 
-#define MO_SENS_L_IO 8
-#define MO_SENS_R_IO 7
-#define LIGHT_SENS_IO 4
-#define BTN_IO 5
+#define PIN 2 // Wo sind die LEDs angeschlossen
+#define MO_SENS_L_IO 8 // Wo ist BewegungsMelder L
+#define MO_SENS_R_IO 7 // Wo ist BewegungsMelder R
+#define LIGHT_SENS_IO 4 // Wo ist der Lichtsensor angechlossen
+#define BTN_IO 5 // Wo ist der Taster angeschlossen
 
 Adafruit_NeoPixel pixels(LED_COUNT, PIN, NEO_GRB + NEO_KHZ800);
 
 #define MODE_NORMAL  0
 #define MODE_ON_SINGULA  1
-#define MODE_RAINBOW  2
-#define MODECOUNT  3
+#define MODE_ON_SINGULA0  2
+#define MODE_ON_SINGULA1  3
+#define MODE_ON_SINGULA2  4
+#define MODE_ON_SINGULA3  5
+#define MODE_ON_SINGULA4  6
+#define MODE_ON_SINGULA5  7
+#define MODE_ON_SINGULA6  8
+#define MODE_ON_SINGULA7  9
+#define MODE_RAINBOW  10
+#define MODECOUNT  11
 int mode = MODE_NORMAL;
 
 int s = 1;
 int r = 60;
 int l = LED_COUNT;
-int h = 92;
+int h = 15;
 int hc = h;
 bool rainbow = false;
 
@@ -112,7 +121,7 @@ int llight = false;
 int tick = 0;
 
 void loop() {
-  tick++;
+  tick += ANIMATION_SPEED;
 
   if (digitalRead(MO_SENS_L_IO)) {
     sensorLOnI = MOTION_DELAY;
@@ -197,7 +206,7 @@ void loop() {
   llight = lightOn;
 
   // LightOn macht heller oder dunkler
-  if (lightOn) {
+  if (lightOn && (mode == MODE_NORMAL)) {
     if (light_val > 0.0D) {
       light_val -= 0.01D;
     } else {
@@ -275,11 +284,32 @@ void loop() {
 	digitalWrite(LED_BUILTIN, (mode != MODE_NORMAL) ? HIGH : LOW);
   if (mode != MODE_NORMAL) {
     state = States_ON;
+  } else {
+    h = 15;
   }
   if (mode == MODE_RAINBOW) {
     rainbow = true;
   } else {
     rainbow = false;
+  }
+  if (mode == MODE_ON_SINGULA) {
+    h = 0;
+  } else if (mode == MODE_ON_SINGULA0) {
+    h = 16;
+  } else if (mode == MODE_ON_SINGULA1) {
+    h = 32;
+  } else if (mode == MODE_ON_SINGULA2) {
+    h = 64;
+  } else if (mode == MODE_ON_SINGULA3) {
+    h = 96;
+  } else if (mode == MODE_ON_SINGULA4) {
+    h = 128;
+  } else if (mode == MODE_ON_SINGULA5) {
+    h = 160;
+  } else if (mode == MODE_ON_SINGULA6) {
+    h = 192;
+  } else if (mode == MODE_ON_SINGULA7) {
+    h = 224;
   }
   
   if (state != States_ON) {
@@ -302,8 +332,8 @@ void loop() {
     double v = s1(x, start);
     v *= 255.0D;
     v *= light_val;
-    int hval = rainbow ? ((((hc - tick + i) % RAINBOW_LEN) / RAINBOW_LEN) * 255.0D) : hc;
-    hval = ((double)i) * 4.0D;//128.0D;
+    int hval = rainbow ? ((((double)((tick + i) % RAINBOW_LEN)) / RAINBOW_LEN) * 255.0D) : hc;
+    //hval = ((double)i) * 4.0D;//128.0D;
     rgb col = hsv2rgb((double)(hval % 256), v, 0.0D);
     SetColor(i, col.r, col.g, col.b);
   }
